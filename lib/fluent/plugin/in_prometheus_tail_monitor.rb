@@ -9,7 +9,7 @@ module Fluent::Plugin
 
     helpers :timer
 
-    config_param :interval, :time, default: 5
+    config_param :interval, :time, default: 1
     attr_reader :registry
 
     MONITOR_IVARS = [
@@ -51,6 +51,12 @@ module Fluent::Plugin
         inode: get_gauge(
           :fluentd_tail_file_inode,
           'Current inode of file.'),
+        maxfsize: get_gauge(
+          :maxfsize,
+          'Current max fsize of file on rotation event'),
+        countonrotate: get_gauge(
+          :countonrotate,
+          'No of rotation noticed by fluentd'),
       }
       timer_execute(:in_prometheus_tail_monitor, @interval, &method(:update_monitor_info))
     end
@@ -72,9 +78,14 @@ module Fluent::Plugin
           # Access to internal variable of internal class...
           # Very fragile implementation
           pe = watcher.instance_variable_get(:@pe)
+          maxfsize = watcher.instance_variable_get(:@maxfsize)
+          countonrotate = watcher.instance_variable_get(:@countonrotate)
           label = labels(info, watcher.path)
           @metrics[:inode].set(label, pe.read_inode)
           @metrics[:position].set(label, pe.read_pos)
+          @metrics[:maxfsize].set(label, maxfsize)
+          @metrics[:countonrotate].set(label, countonrotate)
+          @log.info "PRATIBHA IN PROMETHEUS PLUGIN pr.read_inode and pe.read_pos #{pe.read_inode} #{pe.read_pos} maxfsize #{maxfsize} countonrotate #{countonrotate} "
         end
       end
     end
