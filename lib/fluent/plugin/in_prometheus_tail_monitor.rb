@@ -51,12 +51,12 @@ module Fluent::Plugin
         inode: get_gauge(
           :fluentd_tail_file_inode,
           'Current inode of file.'),
-        maxfsize: get_gauge(
-          :maxfsize,
-          'Current max fsize of file on rotation event'),
-        countonrotate: get_gauge(
-          :countonrotate,
-          'No of rotation noticed by fluentd'),
+        totalbytes_logged_in_disk: get_gauge(
+          :fluentd_totalbytes_logged_in_disk,
+          'totalbytes logged in disk.'),
+        totalbytes_collected_from_disk: get_gauge(
+          :fluentd_totalbytes_collected_from_disk,
+          'totalbytes read or collected from disk.'),
       }
       timer_execute(:in_prometheus_tail_monitor, @interval, &method(:update_monitor_info))
     end
@@ -78,14 +78,13 @@ module Fluent::Plugin
           # Access to internal variable of internal class...
           # Very fragile implementation
           pe = watcher.instance_variable_get(:@pe)
-          maxfsize = watcher.instance_variable_get(:@maxfsize)
-          countonrotate = watcher.instance_variable_get(:@countonrotate)
+          totalbytes_logged_in_disk=watcher.instance_variable_get(:@totalbytes_logged_in_disk)
+          totalbytes_collected_from_disk=watcher.instance_variable_get(:@totalbytes_collected_from_disk)
           label = labels(info, watcher.path)
           @metrics[:inode].set(label, pe.read_inode)
           @metrics[:position].set(label, pe.read_pos)
-          @metrics[:maxfsize].set(label, maxfsize)
-          @metrics[:countonrotate].set(label, countonrotate)
-          @log.info "PRATIBHA IN PROMETHEUS PLUGIN pr.read_inode and pe.read_pos #{pe.read_inode} #{pe.read_pos} maxfsize #{maxfsize} countonrotate #{countonrotate} "
+          @metrics[:totalbytes_logged_in_disk].set(label,totalbytes_logged_in_disk)
+          @metrics[:totalbytes_collected_from_disk].set(label,totalbytes_collected_from_disk)
         end
       end
     end
